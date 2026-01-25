@@ -4,17 +4,18 @@ import { motion } from "framer-motion";
 
 /**
  * JoinRoom
- * - Manual join via Room ID
+ * - Accepts Room ID OR full invite link
  * - Requires username
  * - Optional password
- * - Mobile responsive
+ * - Mobile safe
  */
 export default function JoinRoom() {
   const navigate = useNavigate();
 
-  const [roomId, setRoomId] = useState("");
+  const [input, setInput] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
   // Load username if already stored
   useEffect(() => {
@@ -24,17 +25,38 @@ export default function JoinRoom() {
     }
   }, []);
 
+  // 🔑 EXTRACT ONLY ROOM ID (CRITICAL FIX)
+  const extractRoomId = (value) => {
+    try {
+      if (value.startsWith("http")) {
+        const url = new URL(value);
+        return url.pathname.split("/").pop();
+      }
+      return value.trim();
+    } catch {
+      return value.trim();
+    }
+  };
+
   const handleJoin = () => {
-    if (!roomId.trim() || !username.trim()) {
-      alert("Room ID and Username are required");
+    setError("");
+
+    if (!input.trim() || !username.trim()) {
+      setError("Room ID / Link and Username are required");
       return;
     }
 
-    // Save username for session
+    const roomId = extractRoomId(input);
+
+    // 🚨 HARD GUARD — prevents /room/https/... forever
+    if (!/^[a-zA-Z0-9_-]{6,12}$/.test(roomId)) {
+      setError("Invalid room link or ID");
+      return;
+    }
+
     localStorage.setItem("username", username.trim());
 
-    // Navigate to room
-    navigate(`/room/${roomId.trim()}`, {
+    navigate(`/room/${roomId}`, {
       state: {
         password: password || null
       }
@@ -53,12 +75,18 @@ export default function JoinRoom() {
           Join a Room
         </h2>
 
-        {/* Room ID */}
+        {error && (
+          <p className="text-sm text-red-400 text-center">
+            {error}
+          </p>
+        )}
+
+        {/* Room ID or Link */}
         <input
           type="text"
-          placeholder="Room ID (e.g. A1B2C3D4)"
-          value={roomId}
-          onChange={(e) => setRoomId(e.target.value)}
+          placeholder="Paste room link or ID"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
           className="w-full bg-gray-950 border border-gray-700 rounded px-3 py-2 outline-none focus:border-indigo-500"
         />
 
@@ -82,14 +110,14 @@ export default function JoinRoom() {
 
         <button
           onClick={handleJoin}
-          disabled={!roomId.trim() || !username.trim()}
+          disabled={!input.trim() || !username.trim()}
           className="w-full bg-indigo-600 py-2 rounded hover:bg-indigo-500 transition disabled:opacity-50"
         >
           Join Room
         </button>
 
         <p className="text-xs text-gray-400 text-center">
-          You’ll be asked for the password only if the room is protected.
+          You can paste a full invite link or just the room ID.
         </p>
       </motion.div>
     </div>
