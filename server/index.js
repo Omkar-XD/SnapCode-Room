@@ -25,11 +25,8 @@ setupSocket(io);
  * Runs every 60 seconds
  */
 setInterval(() => {
-  const now = Date.now();
-
   Object.keys(rooms).forEach((roomId) => {
     const room = rooms[roomId];
-
     if (isRoomExpired(room)) {
       deleteRoom(roomId);
       console.log(`Room expired and deleted: ${roomId}`);
@@ -37,6 +34,11 @@ setInterval(() => {
   });
 }, 60 * 1000);
 
-server.listen(5000, () => {
-  console.log("Backend running on http://localhost:5000");
+/**
+ * ✅ CRITICAL FIX: USE RENDER PORT
+ */
+const PORT = process.env.PORT || 5000;
+
+server.listen(PORT, () => {
+  console.log(`Backend running on port ${PORT}`);
 });
