@@ -37,10 +37,11 @@ export default function CreateRoom() {
 
     const roomId = crypto.randomUUID().slice(0, 8);
 
-    // 🔑 MARK ADMIN (VERY IMPORTANT)
+    // 🔑 MARK ADMIN
     sessionStorage.setItem("adminRoomId", roomId);
 
-    socket.connect();
+    // ❌ DO NOT CONNECT SOCKET HERE
+    // socket.connect(); ← REMOVED
 
     socket.emit("create-room", {
       roomId,
@@ -49,7 +50,6 @@ export default function CreateRoom() {
     });
 
     socket.once("room-created", () => {
-      // Admin goes directly into room (no password prompt)
       navigate(`/room/${roomId}`);
     });
   };
@@ -61,7 +61,6 @@ export default function CreateRoom() {
           Create Room
         </h2>
 
-        {/* Username */}
         <input
           type="text"
           placeholder="Your name"
@@ -70,7 +69,6 @@ export default function CreateRoom() {
           className="w-full bg-gray-950 border border-gray-700 rounded px-3 py-2 outline-none focus:border-indigo-500"
         />
 
-        {/* Expiry */}
         <select
           value={expiry}
           onChange={(e) => setExpiry(Number(e.target.value))}
@@ -81,7 +79,6 @@ export default function CreateRoom() {
           <option value={24}>24 Hours</option>
         </select>
 
-        {/* Password */}
         <input
           type="password"
           placeholder="Optional room password"
@@ -90,7 +87,6 @@ export default function CreateRoom() {
           className="w-full bg-gray-950 border border-gray-700 rounded px-3 py-2 outline-none focus:border-indigo-500"
         />
 
-        {/* Create Button */}
         <button
           onClick={handleCreate}
           disabled={!username.trim()}
