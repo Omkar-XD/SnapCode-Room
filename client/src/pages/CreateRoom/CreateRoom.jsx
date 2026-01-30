@@ -60,6 +60,7 @@ export default function CreateRoom() {
 
     const payload = {
       roomId,
+      username: cleanUsername,
       password: password || null,
       expiresIn: expiry * 60 * 60 * 1000
     };
@@ -80,7 +81,10 @@ export default function CreateRoom() {
     const onRoomCreated = () => {
       if (cancelledRef.current) return;
       cleanup();
-      navigate(`/room/${roomId}`);
+      navigate(`/room/${roomId}`, {
+        state: password ? { password } : {},
+        replace: true,
+      });
     };
 
     const onRoomCreatedError = (message) => {

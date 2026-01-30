@@ -22,24 +22,46 @@ function setupSocket(io) {
         socket.emit("room-created-error", "Invalid room id");
         return;
       }
+      const username = data?.username?.trim();
+      if (!username) {
+        socket.emit("room-created-error", "Username required");
+        return;
+      }
       const expiresIn = Number(data?.expiresIn) || 6 * 60 * 60 * 1000;
       createRoom({
         roomId,
         password: data?.password ?? null,
         expiresIn,
       });
+      socket.join(roomId);
+      addUserToRoom(roomId, socket.id, username);
+      const room = getRoom(roomId);
+      socket.emit("load-snippets", room.snippets);
+      io.to(roomId).emit(
+        "room-users",
+        getRoomUsers(roomId).map((u) => u.username)
+      );
       socket.emit("room-created", { roomId });
-      console.log(`Room created: ${roomId}`);
+      console.log(`Room created: ${roomId}, admin ${username} joined`);
     });
 
     /**
      * JOIN ROOM
      */
     socket.on("join-room", ({ roomId, password, username }) => {
-      // 🛑 Prevent duplicate joins
-      if (socket.rooms.has(roomId)) return;
-
       const room = getRoom(roomId);
+
+      // Already in room (e.g. creator): re-send data so client sees the room
+      if (socket.rooms.has(roomId)) {
+        if (room) {
+          socket.emit("load-snippets", room.snippets);
+          io.to(roomId).emit(
+            "room-users",
+            getRoomUsers(roomId).map((u) => u.username)
+          );
+        }
+        return;
+      }
 
       if (!room) {
         socket.emit("join-error", "Room does not exist");

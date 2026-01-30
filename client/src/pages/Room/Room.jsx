@@ -61,7 +61,7 @@ export default function Room() {
       hasJoinedRef.current = true;
 
       const payload = { roomId, username };
-      if (!isAdmin && joinPassword) {
+      if (joinPassword) {
         payload.password = joinPassword;
       }
 
