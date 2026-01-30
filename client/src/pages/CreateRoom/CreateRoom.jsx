@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import socket from "../../services/socket";
 
-const ROOM_CREATE_TIMEOUT_MS = 15000;
+const ROOM_CREATE_TIMEOUT_MS = 65000;
 
 /**
  * CreateRoom
@@ -19,6 +19,7 @@ export default function CreateRoom() {
   const [password, setPassword] = useState("");
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState("");
+  const [status, setStatus] = useState("");
   const timeoutRef = useRef(null);
   const cancelledRef = useRef(false);
 
@@ -43,6 +44,7 @@ export default function CreateRoom() {
     }
 
     setError("");
+    setStatus("");
     setCreating(true);
     cancelledRef.current = false;
 
@@ -65,6 +67,7 @@ export default function CreateRoom() {
     const cleanup = (cancel = false) => {
       if (cancel) cancelledRef.current = true;
       setCreating(false);
+      setStatus("");
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
         timeoutRef.current = null;
@@ -80,18 +83,21 @@ export default function CreateRoom() {
     };
 
     const onConnectError = () => {
-      cleanup(true);
-      setError(
-        "Could not reach server. If you're running locally, set VITE_SOCKET_URL=http://localhost:5000 and ensure the server is running."
+      // Don't fail immediately—socket will retry. Show status so user knows we're still trying.
+      setStatus(
+        "Connecting to server… Backend may be starting up; this can take up to a minute."
       );
     };
 
-    // Timeout: if server never responds, show error
+    // Timeout: if server never responds, show error (long enough for Render cold start)
     timeoutRef.current = setTimeout(() => {
       if (cancelledRef.current) return;
       cancelledRef.current = true;
+      setStatus("");
       if (!socket.connected) {
-        setError("Connection timed out. Check your internet and that the server is running.");
+        setError(
+          "Connection timed out. The backend may be starting up—try again in a minute, or check your internet."
+        );
       } else {
         setError("Room creation timed out. Please try again.");
       }
@@ -145,6 +151,11 @@ export default function CreateRoom() {
           className="w-full bg-gray-950 border border-gray-700 rounded px-3 py-2 outline-none focus:border-indigo-500"
         />
 
+        {status && (
+          <p className="text-sm text-amber-400 bg-amber-400/10 border border-amber-400/30 rounded px-3 py-2">
+            {status}
+          </p>
+        )}
         {error && (
           <p className="text-sm text-red-400 bg-red-400/10 border border-red-400/30 rounded px-3 py-2">
             {error}
