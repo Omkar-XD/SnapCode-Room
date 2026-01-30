@@ -1,8 +1,8 @@
 import { io } from "socket.io-client";
 
-const socket = io(
-  "https://snapcode-backend.onrender.com",
-  { autoConnect: false }
-);
+const SOCKET_URL =
+  import.meta.env.VITE_SOCKET_URL || "https://snapcode-backend.onrender.com";
+
+const socket = io(SOCKET_URL, { autoConnect: false });
 
 export default socket;
