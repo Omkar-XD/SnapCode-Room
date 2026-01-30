@@ -5,12 +5,12 @@ const SOCKET_URL =
 
 const socket = io(SOCKET_URL, {
   autoConnect: false,
-  // Give backend time to wake up (e.g. Render free tier cold start ~30–60s)
   timeout: 60000,
   reconnection: true,
-  reconnectionAttempts: 5,
-  reconnectionDelay: 5000,
+  reconnectionAttempts: 10,
+  reconnectionDelay: 3000,
   reconnectionDelayMax: 10000,
+  transports: ["websocket", "polling"],
 });
 
 export default socket;

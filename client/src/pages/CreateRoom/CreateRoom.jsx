@@ -73,6 +73,7 @@ export default function CreateRoom() {
         timeoutRef.current = null;
       }
       socket.off("room-created", onRoomCreated);
+      socket.off("room-created-error", onRoomCreatedError);
       socket.off("connect_error", onConnectError);
     };
 
@@ -80,6 +81,12 @@ export default function CreateRoom() {
       if (cancelledRef.current) return;
       cleanup();
       navigate(`/room/${roomId}`);
+    };
+
+    const onRoomCreatedError = (message) => {
+      if (cancelledRef.current) return;
+      cleanup(true);
+      setError(message || "Room creation failed. Please try again.");
     };
 
     const onConnectError = () => {
@@ -105,9 +112,11 @@ export default function CreateRoom() {
     }, ROOM_CREATE_TIMEOUT_MS);
 
     socket.once("room-created", onRoomCreated);
+    socket.once("room-created-error", onRoomCreatedError);
     socket.once("connect_error", onConnectError);
 
     const emitCreateRoom = () => {
+      if (cancelledRef.current) return;
       socket.emit("create-room", payload);
     };
 
@@ -115,6 +124,7 @@ export default function CreateRoom() {
       emitCreateRoom();
     } else {
       socket.once("connect", emitCreateRoom);
+      socket.connect();
     }
   };
 

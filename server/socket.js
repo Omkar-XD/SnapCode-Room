@@ -16,8 +16,18 @@ function setupSocket(io) {
     /**
      * CREATE ROOM (ADMIN)
      */
-    socket.on("create-room", ({ roomId, password, expiresIn }) => {
-      createRoom({ roomId, password, expiresIn });
+    socket.on("create-room", (data) => {
+      const roomId = data?.roomId;
+      if (!roomId || typeof roomId !== "string") {
+        socket.emit("room-created-error", "Invalid room id");
+        return;
+      }
+      const expiresIn = Number(data?.expiresIn) || 6 * 60 * 60 * 1000;
+      createRoom({
+        roomId,
+        password: data?.password ?? null,
+        expiresIn,
+      });
       socket.emit("room-created", { roomId });
       console.log(`Room created: ${roomId}`);
     });
